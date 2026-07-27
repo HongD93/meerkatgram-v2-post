@@ -1,0 +1,79 @@
+server:
+  port: ${APP_PORT}
+
+spring:
+  application:
+    name: meerkatgram-v2-post
+    version: v1
+  web:
+    error:
+      include-stacktrace: always
+      include-message: always
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
+
+  # DB
+  datasource:
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 30000
+
+  # JPA
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        default_batch_fetch_size: 100
+    defer-datasource-initialization: true
+  sql:
+    init:
+      data-locations: classpath*:dummy/*.sql
+      mode: always
+      platform: all
+
+# Springdoc Openapi
+springdoc:
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+  swagger-ui:
+    enabled: false
+  api-docs:
+    path: /api-docs
+  open-api:
+    servers:
+      - url: ${GATEWAY_URI}
+        description: ${APP_DESCRIPTION}
+
+# Log
+logging:
+  file:
+    name: logs/error.log
+  level:
+    root: info
+    com.msameerkatgramv2post: debug
+
+# minio
+minio:
+  minio-endpoint: ${MINIO_ENDPOINT}
+  minio-bucket: ${MINIO_BUCKET}
+  minio-access-key: ${MINIO_ACCESS_KEY}
+  minio-secret-key: ${MINIO_SECRET_KEY}
+  minio-image-path: ${MINIO_IMAGE_PATH}
+  allow-image-extensions:
+    [
+      "image/jpg",
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "image/webp"
+    ]
