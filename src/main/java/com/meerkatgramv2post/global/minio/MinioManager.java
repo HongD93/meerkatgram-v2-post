@@ -3,6 +3,7 @@ package com.meerkatgramv2post.global.minio;
 import com.meerkatgramv2post.global.error.custom.FileManagedException;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.StatObjectArgs;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -90,5 +91,26 @@ public class MinioManager {
             minioConfig.minioEndpoint(),
             path.toString().replace(File.separator, "/")
         );
+    }
+
+    public void validateImageExistsInMinio(String uri) {
+        if(!uri.startsWith(minioConfig.minioEndpoint() + "/" + minioConfig.minioBucket() + minioConfig.minioImagePath())) {
+            throw new FileManagedException("파일 확인 처리: 파일 경로 이상");
+        }
+
+        // URL에서 pure object name (파일 경로)만 추출
+        String prefix = minioConfig.minioEndpoint() + "/" + minioConfig.minioBucket() + "/";
+        String objectName = uri.substring(prefix.length());
+
+        try {
+            minioClient.statObject(
+                StatObjectArgs.builder()
+                    .bucket(minioConfig.minioBucket())
+                    .object(objectName)
+                    .build()
+            );
+        } catch (Exception e) {
+            throw new FileManagedException("파일 확인 처리: MinIO에 실제 존재하지 않는 파일입니다.");
+        }
     }
 }
