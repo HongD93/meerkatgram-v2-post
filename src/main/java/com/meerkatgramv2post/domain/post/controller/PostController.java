@@ -15,6 +15,7 @@ import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/posts")
 public class PostController {
     private final PostService postService;
+    private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
     @GetMapping()
     public ResponseEntity<GlobalResponseDTO<PostIndexResponseDTO>> index(
@@ -61,5 +63,26 @@ public class PostController {
         Authentication authentication
     ) {
         return ResponseEntity.ok(GlobalResponseDTO.success(postService.store(postStoreRequestDTO, authentication)));
+    }
+
+    @Operation(summary = "게시글 삭제 처리")
+    @CustomApiResponse(value = {
+        CustomResponseCode.RESOURCE_NOT_FOUND_ERROR
+        ,CustomResponseCode.INVALID_PARAMETER_ERROR
+        ,CustomResponseCode.UNAUTHENTICATED_ERROR
+        ,CustomResponseCode.UNAUTHORIZED_ERROR
+        ,CustomResponseCode.DB_ERROR
+        ,CustomResponseCode.SYSTEM_ERROR
+    })
+    @PreAuthorize("hasRole('SUPER')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<GlobalResponseDTO<Void>> destroy(
+        @Parameter(description = "게시글 번호", example = "1") @Min(value = 1, message = "1이상 숫자만 허용합니다.") @PathVariable Long id,
+        Authentication authentication
+    ) {
+        long userId = Long.parseLong(authentication.getName());
+        postService.destroy(id, userId);
+
+        return ResponseEntity.ok(GlobalResponseDTO.success());
     }
 }

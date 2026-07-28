@@ -55,6 +55,12 @@ public class GlobalExceptionHandler {
         return this.generateErrorResponse(CustomResponseCode.DUPLICATED_DATA_ERROR);
     }
 
+    @ExceptionHandler(ResourceAuthorMismatchException.class)
+    public ResponseEntity<GlobalResponseDTO<Void>> resourceAuthorMismatchExceptionHandle(ResourceAuthorMismatchException e) {
+        log.debug(CustomResponseCode.RESOURCE_AUTHOR_MISMATCH_ERROR.name(), e);
+        return this.generateErrorResponse(CustomResponseCode.RESOURCE_AUTHOR_MISMATCH_ERROR);
+    }
+
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<GlobalResponseDTO<Void>> methodArgumentTypeMismatchHandle(MethodArgumentTypeMismatchException e) {
         log.debug("{}\n{}", CustomResponseCode.INVALID_PARAMETER_ERROR.name(), String.format("%s : 필드를 확인해 주세요.", e.getName()));

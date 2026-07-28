@@ -7,6 +7,7 @@ import com.meerkatgramv2post.domain.post.request.PostIndexRequestDTO;
 import com.meerkatgramv2post.domain.post.request.PostStoreRequestDTO;
 import com.meerkatgramv2post.domain.post.response.PostIndexResponseDTO;
 import com.meerkatgramv2post.domain.post.response.PostResponseDTO;
+import com.meerkatgramv2post.global.error.custom.ResourceAuthorMismatchException;
 import com.meerkatgramv2post.global.error.custom.ResourceNotFoundException;
 import com.meerkatgramv2post.global.minio.MinioConfig;
 import com.meerkatgramv2post.global.minio.MinioManager;
@@ -58,5 +59,20 @@ public class PostService {
         postRepository.save(post);
 
         return PostResponseDTO.from(post);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void destroy(long id, long userId) {
+        Post post = postRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("이미 삭제된 게시글입니다."));
+
+        // 작성자 체크
+        if(post.getUserId() != userId) {
+            throw new ResourceAuthorMismatchException("게시글 삭제 실패: 작성자 다름");
+        }
+
+        postRepository.delete(post);
+
+        minioManager.removeObject(post.getImage());
     }
 }
