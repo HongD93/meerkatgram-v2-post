@@ -2,7 +2,7 @@ package com.meerkatgramv2post.domain.post.service;
 
 import com.meerkatgramv2post.domain.post.entity.Post;
 import com.meerkatgramv2post.domain.post.repository.PostQueryDSLRepository;
-import com.meerkatgramv2post.domain.post.repository.PostRepository;
+import com.meerkatgramv2post.domain.statistics.repository.StatisticsRepository;
 import com.meerkatgramv2post.domain.post.request.PostIndexRequestDTO;
 import com.meerkatgramv2post.domain.post.request.PostStoreRequestDTO;
 import com.meerkatgramv2post.domain.post.response.PostIndexResponseDTO;
@@ -22,7 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PostService {
     private final PostQueryDSLRepository postQueryDSLRepository;
-    private final PostRepository postRepository;
+    private final StatisticsRepository postRepository;
     private final MinioConfig minioConfig;
     private final MinioManager minioManager;
 
