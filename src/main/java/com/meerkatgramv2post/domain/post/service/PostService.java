@@ -4,11 +4,14 @@ import com.meerkatgramv2post.domain.post.entity.Post;
 import com.meerkatgramv2post.domain.post.repository.PostQueryDSLRepository;
 import com.meerkatgramv2post.domain.post.repository.PostRepository;
 import com.meerkatgramv2post.domain.post.request.PostIndexRequestDTO;
+import com.meerkatgramv2post.domain.post.request.PostStoreRequestDTO;
 import com.meerkatgramv2post.domain.post.response.PostIndexResponseDTO;
 import com.meerkatgramv2post.domain.post.response.PostResponseDTO;
-import com.meerkatgramv2post.global.error.custom.FileManagedException;
+import com.meerkatgramv2post.global.error.custom.ResourceNotFoundException;
 import com.meerkatgramv2post.global.minio.MinioConfig;
+import com.meerkatgramv2post.global.minio.MinioManager;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +23,7 @@ public class PostService {
     private final PostQueryDSLRepository postQueryDSLRepository;
     private final PostRepository postRepository;
     private final MinioConfig minioConfig;
+    private final MinioManager minioManager;
 
     public PostIndexResponseDTO index(PostIndexRequestDTO postIndexRequestDTO) {
         long offset = (postIndexRequestDTO.page() - 1) * postIndexRequestDTO.limit();
@@ -32,20 +36,27 @@ public class PostService {
         boolean isLastPage = offset * postIndexRequestDTO.limit() >= total;
 
         return PostIndexResponseDTO.from(result, total, isLastPage);
+    }
 
-        @Transactional(rollbackFor = Exception.class)
-        public PostResponseDTO store(PostStoreRequestDTO postStoreRequestDTO, Authentication authentication) {
-            minioManager.validateImageExistsInMinio(postStoreRequestDTO.image());
+    public PostResponseDTO show(Long id) {
+        Post post = postRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("이미 삭제된 게시글입니다."));
 
-            long userId = Long.parseLong(authentication.getName());
+        return PostResponseDTO.from(post);
+    }
 
-            Post post = new Post();
-            post.setContent(postStoreRequestDTO.content());
-            post.setImage(postStoreRequestDTO.image());
-            post.setUserId(userId);
-            postRepository.save(post);
+    @Transactional(rollbackFor = Exception.class)
+    public PostResponseDTO store(PostStoreRequestDTO postStoreRequestDTO, Authentication authentication) {
+        minioManager.validateImageExistsInMinio(postStoreRequestDTO.image());
 
-            return PostResponseDTO.from(post);
-        }
+        long userId = Long.parseLong(authentication.getName());
+
+        Post post = new Post();
+        post.setContent(postStoreRequestDTO.content());
+        post.setImage(postStoreRequestDTO.image());
+        post.setUserId(userId);
+        postRepository.save(post);
+
+        return PostResponseDTO.from(post);
     }
 }

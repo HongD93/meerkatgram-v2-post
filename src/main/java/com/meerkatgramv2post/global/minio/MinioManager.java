@@ -18,7 +18,7 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class MinioManager {
-    private final com.meerkatgramv2post.global.minio.MinioConfig minioConfig;
+    private final MinioConfig minioConfig;
     private final MinioClient minioClient;
 
     /**

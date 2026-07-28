@@ -28,12 +28,6 @@ public class GlobalExceptionHandler {
             .body(GlobalResponseDTO.<Void>from(customResponseCode));
     }
 
-    @ExceptionHandler(NotRegisteredException.class)
-    public ResponseEntity<GlobalResponseDTO<Void>> notRegisteredHandle(NotRegisteredException e) {
-        log.debug(CustomResponseCode.NOT_REGISTERED_ERROR.name(), e);
-        return this.generateErrorResponse(CustomResponseCode.NOT_REGISTERED_ERROR);
-    }
-
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<GlobalResponseDTO<Void>> accessDeniedHandle(AccessDeniedException e) {
         log.debug(CustomResponseCode.UNAUTHORIZED_ERROR.name(), e);
@@ -49,16 +43,10 @@ public class GlobalExceptionHandler {
         return this.generateErrorResponse(CustomResponseCode.UNAUTHORIZED_ERROR);
     }
 
-    @ExceptionHandler(InvalidTokenException.class)
-    public ResponseEntity<GlobalResponseDTO<Void>> invalidTokenHandle(InvalidTokenException e) {
-        log.debug(CustomResponseCode.INVALID_TOKEN_ERROR.name(), e);
-        return this.generateErrorResponse(CustomResponseCode.INVALID_TOKEN_ERROR);
-    }
-
-    @ExceptionHandler(DeletedRecordException.class)
-    public ResponseEntity<GlobalResponseDTO<Void>> deletedRecordHandle(DeletedRecordException e) {
-        log.debug(CustomResponseCode.NOT_FOUND_DATA_ERROR.name(), e);
-        return this.generateErrorResponse(CustomResponseCode.NOT_FOUND_DATA_ERROR);
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<GlobalResponseDTO<Void>> resourceNotFoundExceptionHandle(ResourceNotFoundException e) {
+        log.debug(CustomResponseCode.RESOURCE_NOT_FOUND_ERROR.name(), e);
+        return this.generateErrorResponse(CustomResponseCode.RESOURCE_NOT_FOUND_ERROR);
     }
 
     @ExceptionHandler(DuplicatedRecordException.class)
