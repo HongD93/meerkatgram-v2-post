@@ -38,7 +38,7 @@ spring:
   sql:
     init:
       data-locations: classpath*:dummy/*.sql
-      mode: always
+      mode: never
       platform: all
 
 # Springdoc Openapi
