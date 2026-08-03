@@ -27,6 +27,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     testImplementation 'org.springframework.security:spring-security-test'
 
+    // AOP (JPAWithDeletedAspect, SoftDeleteFilterAspect에서 @Aspect 사용을 위해 필요)
+    implementation 'org.springframework:spring-aspects'
+
     // JPA & QueryDSL(** 현재는 학습내용과 상이하지 않도록 5.x를 사용하나, 실무에서는 6.x 버전으로 마이그레이션 필요 **)
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'com.querydsl:querydsl-jpa:5.1.0:jakarta'

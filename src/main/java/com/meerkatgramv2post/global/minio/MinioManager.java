@@ -1,6 +1,6 @@
 package com.meerkatgramv2post.global.minio;
 
-import com.meerkatgramv2post.global.error.custom.FileManagedException;
+import com.meerkatgramv2post.global.error.custom.business.FileManagedException;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
@@ -49,8 +49,8 @@ public class MinioManager {
     }
 
     /**
-     * 랜덤 파일명 생성(확장자 없음)
-     * @return 'yyyyMMdd_파일명' 형식
+     * 랜덤 파일명 생성 (확장자 없음)
+     * @return `yyyyMMdd_파일명` 형식
      */
     public String generateFileName() {
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
@@ -60,7 +60,7 @@ public class MinioManager {
     }
 
     public String generateObjectKey(MultipartFile file) {
-        Path path = Path.of(minioConfig.minioImagePath(), this.generateFileName() + "." + this.extractExtension(file));
+        Path path = Path.of(minioConfig.minioImagePath(), this.generateFileName() + "." + this.extractExtension(file)).normalize();
         return path.toString().replace(File.separator, "/");
     }
 
@@ -69,14 +69,14 @@ public class MinioManager {
             minioClient
                 .putObject(
                     PutObjectArgs.builder()
-                        .bucket(minioConfig.minioBucket())   // 파일이 저장될 minIO의 버킷명
-                        .object(objectKey)                   // 버킷 내부에서 관리할 전체 저장 경로
+                        .bucket(minioConfig.minioBucket())  // 파일이 저장될 MinIO의 버킷명
+                        .object(objectKey)                  // 버킷 내부에서 관리될 전체 저장 경로
                         .stream(
-                            inputStream,                     // 업로드할 파일의 InputStream
-                            file.getSize(),                  // 업로드할 파일의 크기
-                            -1                               // 업로드시 패킷 크기(-1을 Minio SDK가 적절하게 조절해서 전송)
+                            inputStream,                    // 업로드할 파일의 InputStream
+                            file.getSize(),                 // 업로드할 파일의 크기
+                            -1                              // 업로드시 패킷 크기(-1은 Minio SDK가 적절하게 조절해서 전송)
                         )
-                        .contentType(file.getContentType())
+                        .contentType(file.getContentType()) // 파일의 MIME 타입
                         .build()
                 );
         } catch (Exception e) {

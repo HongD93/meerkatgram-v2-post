@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/api/posts/statistics")
 public class StatisticsController {
-
     private final StatisticsService statisticsService;
 
     @PreAuthorize("isAuthenticated()")

@@ -7,8 +7,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class MyMinioClient {
     @Bean
-    public MinioClient minioClient(MinioConfig minioConfig){
-        return  MinioClient.builder()
+    public MinioClient minioClient(MinioConfig minioConfig) {
+        return MinioClient.builder()
             .endpoint(minioConfig.minioEndpoint())
             .credentials(minioConfig.minioAccessKey(), minioConfig.minioSecretKey())
             .build();

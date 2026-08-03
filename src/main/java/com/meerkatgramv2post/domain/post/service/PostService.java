@@ -1,15 +1,14 @@
 package com.meerkatgramv2post.domain.post.service;
 
 import com.meerkatgramv2post.domain.post.entity.Post;
-import com.meerkatgramv2post.domain.post.repository.PostQueryDSLRepository;
-import com.meerkatgramv2post.domain.statistics.repository.StatisticsRepository;
-import com.meerkatgramv2post.domain.post.request.PostIndexRequestDTO;
-import com.meerkatgramv2post.domain.post.request.PostStoreRequestDTO;
 import com.meerkatgramv2post.domain.post.response.PostIndexResponseDTO;
 import com.meerkatgramv2post.domain.post.response.PostResponseDTO;
-import com.meerkatgramv2post.global.error.custom.ResourceAuthorMismatchException;
-import com.meerkatgramv2post.global.error.custom.ResourceNotFoundException;
-import com.meerkatgramv2post.global.minio.MinioConfig;
+import com.meerkatgramv2post.domain.post.repository.PostQueryDSLRepository;
+import com.meerkatgramv2post.domain.post.request.PostIndexRequestDTO;
+import com.meerkatgramv2post.domain.post.request.PostStoreRequestDTO;
+import com.meerkatgramv2post.domain.statistics.repository.StatisticsRepository;
+import com.meerkatgramv2post.global.error.custom.business.NotFoundResourceException;
+import com.meerkatgramv2post.global.error.custom.business.ResourceAuthorMismatchException;
 import com.meerkatgramv2post.global.minio.MinioManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -23,7 +22,6 @@ import java.util.List;
 public class PostService {
     private final PostQueryDSLRepository postQueryDSLRepository;
     private final StatisticsRepository postRepository;
-    private final MinioConfig minioConfig;
     private final MinioManager minioManager;
 
     public PostIndexResponseDTO index(PostIndexRequestDTO postIndexRequestDTO) {
@@ -34,37 +32,37 @@ public class PostService {
 
         // 토탈 및 마지막 페이지 여부 조회
         long total = postRepository.count();
-        boolean isLastPage = offset * postIndexRequestDTO.limit() >= total;
+        boolean isLastPage = offset + postIndexRequestDTO.limit() >= total;
 
         return PostIndexResponseDTO.from(result, total, isLastPage);
     }
 
-    public PostResponseDTO show(Long id) {
-        Post post = postRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("이미 삭제된 게시글입니다."));
-
-        return PostResponseDTO.from(post);
-    }
-
     @Transactional(rollbackFor = Exception.class)
     public PostResponseDTO store(PostStoreRequestDTO postStoreRequestDTO, Authentication authentication) {
+        // 파일URI 체크
         minioManager.validateImageExistsInMinio(postStoreRequestDTO.image());
 
-        long userId = Long.parseLong(authentication.getName());
-
+        // 게시글 생성 처리
         Post post = new Post();
         post.setContent(postStoreRequestDTO.content());
         post.setImage(postStoreRequestDTO.image());
-        post.setUserId(userId);
+        post.setUserId(Long.parseLong(authentication.getName()));
         postRepository.save(post);
 
         return PostResponseDTO.from(post);
     }
 
-    @Transactional(rollbackFor = Exception.class)
-    public void destroy(long id, long userId) {
+    public PostResponseDTO show(Long id) {
         Post post = postRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("이미 삭제된 게시글입니다."));
+            .orElseThrow(() -> new NotFoundResourceException("이미 삭제된 게시글: " + id));
+
+        return PostResponseDTO.from(post);
+    }
+
+    public void destroy(long id, long userId) {
+        // 게시글 조회
+        Post post = postRepository.findById(id)
+            .orElseThrow(() -> new NotFoundResourceException("이미 삭제된 게시글: " + id));
 
         // 작성자 체크
         if(post.getUserId() != userId) {
