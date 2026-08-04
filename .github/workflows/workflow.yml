@@ -1,0 +1,45 @@
+# Actions 탭 목록에 표시될 워크플로우명
+name: Post Build And Deploy
+
+# 이벤트 트리거 정의
+on:
+  # push 이벤트가 발생하면 트리거
+  push:
+    # 그 중에서 master 브랜치만 push 되었을 때 (다른 브랜치 push는 무시)
+    branches: [master]
+
+env:
+  # ghcr.io에 올릴 이미지명 설정
+  IMAGE_NAME: post-service
+
+# 해당 워크플로우가 실행 중 GITHUB_TOKEN에 부여할 권한 설정
+permissions:
+  # 해당 레포 코드를 checkout하기 위한 최소 조건
+  contents: read
+  # ghcr.io(github Packages)에 이미지를 push하기 위한 권한
+  packages: write
+
+jobs:
+  # job의 id(임의로 지정 가능, actions 로그에 표시)
+  build-and-push:
+    # 해당 job을 실행할 GitHub 호스팅
+    runs-on: ubuntu-22.04
+    steps:
+      # Actions 로그에 표시될 step명
+      - name: Checkout
+        # 현재 레포 코드를 러너로 내려받는 공식 액션
+        uses: actions/checkout@v7
+      - name: Login to ghcr.io
+        uses: docker/login-action@v4
+        with:
+          # 로그인할 대상 레지스트리 주소
+          registry: ghcr.io
+          # 이 워크플로우를 트리거한, 사용자의 GitHubId
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and Push image
+        run: |
+          IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/$IMAGE_NAME
+          docker build -t $IMAGE:$GITHUB_RUN_NUMBER .
+          docker push $IMAGE:$GITHUB_RUN_NUMBER
+    # TODO: 추후 k8s manifest 작성시, 추가 작업 필요
