@@ -11,6 +11,12 @@ on:
 env:
   # ghcr.io에 올릴 이미지명 설정
   IMAGE_NAME: post-service
+  # 매니페스트 작업 디렉토리
+  MANIFEST_WORK_DIR: manifest
+  # 매니페스트를 올릴 대상 레포
+  MANIFEST_REPO: hongd93/msa4-k8s-manifest
+  # 해당 메니페스트 레파지토리의 경로
+  MANIFEST_PATH: post
 
 # 해당 워크플로우가 실행 중 GITHUB_TOKEN에 부여할 권한 설정
 permissions:
@@ -42,4 +48,31 @@ jobs:
           IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/$IMAGE_NAME
           docker build -t $IMAGE:$GITHUB_RUN_NUMBER .
           docker push $IMAGE:$GITHUB_RUN_NUMBER
-    # TODO: 추후 k8s manifest 작성시, 추가 작업 필요
+      # 다른 레파지토리(msa4-k8s-manifest)를 추가로 내려받기 위해 Checkout
+      - name: Checkout k8s-manifests
+        uses: actions/checkout@v7
+        with:
+          # 내려받을 대상 레포
+          repository: ${{ env.MANIFEST_REPO }}
+          # 다른 레포이므로 GITHUB_TOKEN 대신 10절에서 등록한 PAT 사용
+          token: ${{ secrets.MANIFEST_REPO_TOKEN }}
+          # 이 레포를 받아둘 하위 폴더 이름 (임의 지정 가능)
+          path: manifests
+
+      - name: Update image tag
+        # 여기부터는 다시 run: 블록이므로 $VAR로 통일
+        # 위 build 스텝과 동일하게 이미지 경로 재조립
+        # k8s-manifests 안에서 이 서비스 폴더로 이동 (자기 폴더만 건드림)
+        # deployment.yaml의 image 태그 줄을 방금 push한 태그로 치환
+        # 커밋 작성자 이메일 (자유롭게 지정 가능한 값)
+        # 커밋 작성자 이름
+        # 변경된 deployment.yaml 커밋
+        # k8s-manifests에 push → ArgoCD가 감지해 자동 배포
+        run: |
+          IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/$IMAGE_NAME
+          cd manifests/$MANIFEST_PATH
+          sed -i "s|image: ${IMAGE}:.*|image: ${IMAGE}:${GITHUB_RUN_NUMBER}|" deployment.yaml
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git commit -am "Deploy ${IMAGE_NAME}:${GITHUB_RUN_NUMBER}"
+          git push
